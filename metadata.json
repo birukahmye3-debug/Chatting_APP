@@ -1,0 +1,6 @@
+{
+  "name": "ChatFlow",
+  "description": "A modern Telegram-inspired real-time messaging web application with direct conversations, user search, profile management, and responsive chat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

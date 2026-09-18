@@ -1,0 +1,182 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Firebase Auth user UID",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Full display name of the user",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique handle of the user",
+          "maxLength": 50,
+          "minLength": 2,
+          "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user",
+          "maxLength": 150
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar URL or base64 thumbnail",
+          "maxLength": 500000
+        },
+        "bio": {
+          "type": "string",
+          "description": "User profile bio or status text",
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp in ISO or server timestamp format"
+        },
+        "lastSeen": {
+          "type": "string",
+          "description": "Last active timestamp"
+        },
+        "isOnline": {
+          "type": "boolean",
+          "description": "Current presence status"
+        }
+      },
+      "required": ["id", "name", "username", "email", "createdAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "1-on-1 direct conversation between two users",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Conversation document ID",
+          "maxLength": 128
+        },
+        "participants": {
+          "type": "array",
+          "description": "Array of participant user UIDs"
+        },
+        "participantDetails": {
+          "type": "object",
+          "description": "Map of user UID to profile preview object"
+        },
+        "lastMessage": {
+          "type": "string",
+          "description": "Snippet of the most recent message",
+          "maxLength": 1000
+        },
+        "lastMessageAt": {
+          "type": "string",
+          "description": "Timestamp of the most recent message"
+        },
+        "lastMessageSenderId": {
+          "type": "string",
+          "description": "UID of the user who sent the last message",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Conversation creation timestamp"
+        },
+        "unreadCounts": {
+          "type": "object",
+          "description": "Map of user UID to unread message count"
+        }
+      },
+      "required": ["id", "participants", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Direct message within a conversation",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique message ID",
+          "maxLength": 128
+        },
+        "conversationId": {
+          "type": "string",
+          "description": "Parent conversation ID",
+          "maxLength": 128
+        },
+        "senderId": {
+          "type": "string",
+          "description": "UID of the sender",
+          "maxLength": 128
+        },
+        "senderName": {
+          "type": "string",
+          "description": "Display name of the sender",
+          "maxLength": 100
+        },
+        "text": {
+          "type": "string",
+          "description": "Text body of the message",
+          "maxLength": 5000
+        },
+        "type": {
+          "type": "string",
+          "description": "Message payload type",
+          "enum": ["text", "image", "file"]
+        },
+        "mediaUrl": {
+          "type": "string",
+          "description": "URL or base64 data for media attachment",
+          "maxLength": 1500000
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Original name of the uploaded file",
+          "maxLength": 255
+        },
+        "fileSize": {
+          "type": "string",
+          "description": "Formatted file size string",
+          "maxLength": 30
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Message timestamp"
+        },
+        "status": {
+          "type": "string",
+          "description": "Message delivery and read status",
+          "enum": ["sent", "delivered", "read"]
+        }
+      },
+      "required": ["id", "conversationId", "senderId", "text", "type", "createdAt", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "User profiles directory"
+    },
+    "/conversations/{conversationId}": {
+      "schema": {
+        "$ref": "#/entities/Conversation"
+      },
+      "description": "Direct conversations between users"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/Message"
+      },
+      "description": "Individual messages in a conversation"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .bg-pattern {
+    background-color: #f1f5f9;
+    background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px), radial-gradient(#cbd5e1 0.75px, #f1f5f9 0.75px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+  }
+
+  .dark .bg-pattern-dark, .bg-pattern-dark {
+    background-color: #0b1120;
+    background-image: radial-gradient(#1e293b 0.75px, transparent 0.75px), radial-gradient(#1e293b 0.75px, #0b1120 0.75px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+  }
+}

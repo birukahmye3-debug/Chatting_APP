@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.id is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.username is string && data.username.size() >= 2 && data.username.size() <= 50 &&
+             data.email is string && data.email.size() <= 150 &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 300)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 2000000)) &&
+             (!('isOnline' in data) || data.isOnline is bool);
+    }
+
+    function isValidConversation(data) {
+      return data.id is string &&
+             data.participants is list && data.participants.size() >= 1 && data.participants.size() <= 10 &&
+             (!('lastMessage' in data) || (data.lastMessage is string && data.lastMessage.size() <= 1000));
+    }
+
+    function isValidMessage(data) {
+      return data.id is string &&
+             data.conversationId is string &&
+             data.senderId is string &&
+             data.senderId == request.auth.uid &&
+             data.text is string && data.text.size() <= 5000 &&
+             data.type in ['text', 'image', 'file'] &&
+             (!('mediaUrl' in data) || (data.mediaUrl is string && data.mediaUrl.size() <= 3000000)) &&
+             data.status in ['sent', 'delivered', 'read'];
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && request.resource.data.id == request.auth.uid && isValidUser(request.resource.data);
+      allow delete: if false;
+    }
+
+    // Conversations Collection
+    match /conversations/{conversationId} {
+      allow get: if isSignedIn() && (request.auth.uid in resource.data.participants);
+      allow list: if isSignedIn() && (request.auth.uid in resource.data.participants);
+      allow create: if isSignedIn() && (request.auth.uid in request.resource.data.participants) && isValidConversation(request.resource.data);
+      allow update: if isSignedIn() && (request.auth.uid in resource.data.participants) && isValidConversation(request.resource.data);
+      allow delete: if false;
+
+      // Messages Sub-collection
+      match /messages/{messageId} {
+        function isParticipantOfConversation() {
+          return isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants);
+        }
+
+        allow read: if isParticipantOfConversation();
+        allow create: if isParticipantOfConversation() && isValidMessage(request.resource.data);
+        allow update: if isParticipantOfConversation() && (
+          // Sender updating message content/status
+          (resource.data.senderId == request.auth.uid && request.resource.data.senderId == request.auth.uid) ||
+          // Recipient updating read/delivered status
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        );
+        allow delete: if isParticipantOfConversation() && resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // Test connection document
+    match /test/{testId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}
